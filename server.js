@@ -37,6 +37,7 @@ app.use("/api/blogs", blogRoutes);
 
 
 
+
 app.get('/', (req, res) => {
   res.send({ success: true, message: 'Backend boilerplate running' });
 });
