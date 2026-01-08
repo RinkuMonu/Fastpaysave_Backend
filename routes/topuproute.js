@@ -14,5 +14,4 @@ router.post('/wallet', auth, generatePayment);
 router.post('/wallet/callback', callbackPayIn);
 
 
-
 module.exports = router;

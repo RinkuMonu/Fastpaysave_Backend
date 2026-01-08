@@ -93,7 +93,6 @@ exports.generatePayment = async (req, res, next) => {
 };
 
 
-
 exports.callbackPayIn = async (req, res) => {
     try {
         const data = req.body;
@@ -222,7 +221,6 @@ exports.callbackPayIn = async (req, res) => {
 };
 
 
-
 exports.getWalletTransactions = async (req, res) => {
     try {
         const { userRole, userId } = req;
@@ -328,17 +326,150 @@ exports.getWalletTransactions = async (req, res) => {
     }
 };
 
+// exports.getAdminDashboard = async (req, res) => {
+//     try {
+//         // Allow only admin & super admin
+//         // console.log("xxxxxx", req)
+
+//         console.log("USER ROLE:", req.userRole);
+//         console.log("USER ID:", req.userId);
+
+
+//         if (req.userRole !== "admin") {
+//             return res.status(403).json({
+//                 success: false,
+//                 message: "Access denied. Use Admin only."
+//             });
+//         }
+
+
+//         const todayStart = new Date();
+//         todayStart.setHours(0, 0, 0, 0);
+
+//         const todayEnd = new Date();
+//         todayEnd.setHours(23, 59, 59, 999);
+
+//         // --------------------------------------
+//         // 1️⃣ TOTAL USERS
+//         // --------------------------------------
+//         const totalUsers = await User.countDocuments();
+
+//         // --------------------------------------
+//         // 2️⃣ TOTAL FASTAG RECHARGES (all-time)
+//         // Replace Recharge with your FASTag recharge model
+//         // --------------------------------------
+//         const totalFastagRecharges = await Transaction.countDocuments({
+//             type: "FASTag Recharge",
+//         });
+
+//         // --------------------------------------
+//         // 3️⃣ TOTAL WALLET TOP-UPS (Credit transactions)
+//         // --------------------------------------
+//         const totalEchalan = await Transaction.countDocuments({
+//             type: "eChallan",
+//             status: "Success"
+//         });
+
+//         // --------------------------------------
+//         // 4️⃣ Recharge Volume (Last 30 Days)
+//         // --------------------------------------
+//         const last30Days = new Date();
+//         last30Days.setDate(last30Days.getDate() - 30);
+
+//         const rechargeVolume = await Transaction.aggregate([
+//             {
+//                 $match: {
+//                     createdAt: { $gte: last30Days },
+//                     transaction_type: "debit",
+//                     status: "Success"
+//                 }
+//             },
+//             {
+//                 $group: {
+//                     _id: null,
+//                     totalAmount: { $sum: "$amount" }
+//                 }
+//             }
+//         ]);
+//         console.log(rechargeVolume)
+
+//         const volume = rechargeVolume[0]?.totalAmount || 0;
+
+//         // --------------------------------------
+//         // 5️⃣ Today’s Recharge Summary
+//         // --------------------------------------
+//         const todaySummary = await Transaction.aggregate([
+//             {
+//                 $match: {
+//                     createdAt: { $gte: todayStart, $lte: todayEnd },
+//                     transaction_type: "debit"
+//                 }
+//             },
+//             {
+//                 $group: {
+//                     _id: "$status",
+//                     count: { $sum: 1 }
+//                 }
+//             }
+//         ]);
+
+//         let pending = 0, success = 0, failed = 0, refund = 0;
+
+//         todaySummary.forEach(item => {
+//             if (item._id === "Pending") pending = item.count;
+//             if (item._id === "Success") success = item.count;
+//             if (item._id === "Failed") failed = item.count;
+//             if (item._id === "Refund") refund = item.count;
+//         });
+
+//         // --------------------------------------
+//         // 6️⃣ Success Rate (%)
+//         // --------------------------------------
+//         const totalToday = pending + success + failed + refund;
+//         const successRate = totalToday ? ((success / totalToday) * 100).toFixed(1) : 0;
+
+//         // --------------------------------------
+//         // Final API Response
+//         // --------------------------------------
+//         return res.status(200).json({
+//             success: true,
+//             data: {
+//                 totalUsers,
+//                 totalFastagRecharges: totalFastagRecharges,
+//                 totalEchalan,
+//                 rechargeVolume: volume,
+//                 today: {
+//                     pending,
+//                     success,
+//                     failed,
+//                     refund,
+//                 },
+//                 successRate
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error("Dashboard API Error:", error);
+//         return res.status(500).json({
+//             success: false,
+//             message: "Something went wrong",
+//             error: error.message
+//         });
+//     }
+// };
+
+
 exports.getAdminDashboard = async (req, res) => {
     try {
-        // Allow only admin & super admin
-        // console.log("xxxxxx", req)
-        if (req.userRole !== "admin" || req.userRole !== "super_admin") {
+        console.log("USER ROLE:", req.userRole);
+        console.log("USER ID:", req.userId);
+
+        if (req.userRole !== "admin") {
             return res.status(403).json({
                 success: false,
                 message: "Access denied. Use Admin only."
             });
         }
-
 
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -346,30 +477,21 @@ exports.getAdminDashboard = async (req, res) => {
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        // --------------------------------------
         // 1️⃣ TOTAL USERS
-        // --------------------------------------
         const totalUsers = await User.countDocuments();
 
-        // --------------------------------------
-        // 2️⃣ TOTAL FASTAG RECHARGES (all-time)
-        // Replace Recharge with your FASTag recharge model
-        // --------------------------------------
+        // 2️⃣ TOTAL FASTAG RECHARGES
         const totalFastagRecharges = await Transaction.countDocuments({
             type: "FASTag Recharge",
         });
 
-        // --------------------------------------
-        // 3️⃣ TOTAL WALLET TOP-UPS (Credit transactions)
-        // --------------------------------------
+        // 3️⃣ TOTAL eChallan
         const totalEchalan = await Transaction.countDocuments({
             type: "eChallan",
             status: "Success"
         });
 
-        // --------------------------------------
         // 4️⃣ Recharge Volume (Last 30 Days)
-        // --------------------------------------
         const last30Days = new Date();
         last30Days.setDate(last30Days.getDate() - 30);
 
@@ -388,13 +510,10 @@ exports.getAdminDashboard = async (req, res) => {
                 }
             }
         ]);
-        console.log(rechargeVolume)
 
         const volume = rechargeVolume[0]?.totalAmount || 0;
 
-        // --------------------------------------
-        // 5️⃣ Today’s Recharge Summary
-        // --------------------------------------
+        // 5️⃣ TODAY Recharge Summary
         const todaySummary = await Transaction.aggregate([
             {
                 $match: {
@@ -410,43 +529,70 @@ exports.getAdminDashboard = async (req, res) => {
             }
         ]);
 
-        let pending = 0, success = 0, failed = 0, refund = 0;
+        let todayPending = 0,
+            todaySuccess = 0,
+            todayFailed = 0;
 
         todaySummary.forEach(item => {
-            if (item._id === "Pending") pending = item.count;
-            if (item._id === "Success") success = item.count;
-            if (item._id === "Failed") failed = item.count;
-            if (item._id === "Refund") refund = item.count;
+            if (item._id === "Pending") todayPending = item.count;
+            if (item._id === "Success") todaySuccess = item.count;
+            if (item._id === "Failed") todayFailed = item.count;
         });
 
-        // --------------------------------------
-        // 6️⃣ Success Rate (%)
-        // --------------------------------------
-        const totalToday = pending + success + failed + refund;
-        const successRate = totalToday ? ((success / totalToday) * 100).toFixed(1) : 0;
+        // 6️⃣ OVERALL Recharge Summary
+        const overallSummary = await Transaction.aggregate([
+            {
+                $match: {
+                    transaction_type: "debit"
+                }
+            },
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
 
-        // --------------------------------------
-        // Final API Response
-        // --------------------------------------
+        let overallPending = 0,
+            overallSuccess = 0,
+            overallFailed = 0;
+
+        overallSummary.forEach(item => {
+            if (item._id === "Pending") overallPending = item.count;
+            if (item._id === "Success") overallSuccess = item.count;
+            if (item._id === "Failed") overallFailed = item.count;
+        });
+
+        const overallTotal =
+            overallPending + overallSuccess + overallFailed;
+
+        const successRate = overallTotal
+            ? ((overallSuccess / overallTotal) * 100).toFixed(1)
+            : 0;
+
         return res.status(200).json({
             success: true,
             data: {
                 totalUsers,
-                totalFastagRecharges: totalFastagRecharges,
+                totalFastagRecharges,
                 totalEchalan,
                 rechargeVolume: volume,
                 today: {
-                    pending,
-                    success,
-                    failed,
-                    refund,
+                    pending: todayPending,
+                    success: todaySuccess,
+                    failed: todayFailed
+                },
+                overall: {
+                    pending: overallPending,
+                    success: overallSuccess,
+                    failed: overallFailed
                 },
                 successRate
             }
         });
 
     } catch (error) {
-        console.error("Dashboard API Error:", error);
         return res.status(500).json({
             success: false,
             message: "Something went wrong",
@@ -454,3 +600,5 @@ exports.getAdminDashboard = async (req, res) => {
         });
     }
 };
+
+
