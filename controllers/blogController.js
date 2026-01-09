@@ -51,7 +51,6 @@ exports.createBlog = async (req, res) => {
   }
 };
 
-
 /**
  * GET ALL BLOGS (Public)
  */
@@ -64,7 +63,6 @@ exports.getAllBlogs = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-
 
 /**
  * GET SINGLE BLOG BY SLUG (Public)
